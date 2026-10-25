@@ -1,5 +1,5 @@
 -- ============================================================================
--- Smart India Hackathon 2026 (PS 26047 - Ministry of Ayush)
+-- MineArena 1.0 National Hackathon
 -- Autonomous OPD Clinical Intake Kiosk & Doctor Portal Database Schema
 -- ============================================================================
 

@@ -107,9 +107,14 @@ export default function AyushKioskHome() {
                 <path d="M7.97945 19.6719C7.97945 21.8066 6.24893 23.5371 4.11424 23.5371C1.97954 23.5371 0.249023 21.8066 0.249023 19.6719C0.249023 17.5372 1.97954 15.8066 4.11424 15.8066C6.24893 15.8066 7.97945 17.5372 7.97945 19.6719Z" fill="#4865FF"/>
               </g>
             </svg>
-            <span className="font-serif text-[23px] sm:text-[25px] tracking-tight text-[#080331] font-normal leading-none select-none">
-              MediChain <span className="text-[#4865FF] font-sans font-bold text-xl sm:text-2xl">AI</span>
-            </span>
+            <div className="flex flex-col">
+              <span className="font-serif text-[22px] sm:text-[24px] tracking-tight text-[#080331] font-normal leading-none select-none">
+                MediChain <span className="text-[#4865FF] font-sans font-bold text-xl sm:text-2xl">AI</span>
+              </span>
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-[#4865ff] leading-none mt-0.5">
+                Autonomous OPD Kiosk
+              </span>
+            </div>
           </a>
 
           {/* Center Navigation Links (Matching August Health layout) */}
@@ -415,7 +420,7 @@ export default function AyushKioskHome() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#328a3b] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#328a3b]"></span>
             </span>
-            <span className="font-semibold tracking-wide">{t('hero.badge', 'MEDICHAIN AI · MINEARENA 1.0')}</span>
+            <span className="font-semibold tracking-wide">{t('hero.badge', 'MINEARENA 1.0 · AUTONOMOUS OPD CLINICAL KIOSK')}</span>
             <span className="text-stone/30">|</span>
             <span className="text-[#4865ff] font-semibold">Dual-Mode Voice &amp; Touch Kiosk</span>
           </div>
@@ -499,7 +504,7 @@ export default function AyushKioskHome() {
       </section>
 
       {/* ──────────────────────────────────────────────────────────
-          4. THE PLATFORM — 2x2 FEATURE CARDS (100% PS 26047 Terms)
+          4. THE PLATFORM — 2x2 FEATURE CARDS
           ────────────────────────────────────────────────────────── */}
       <section id="platform" className="home-platform bg-white py-24 sm:py-32 px-6">
         <div className="max-w-[1140px] mx-auto">

@@ -29,7 +29,7 @@ export function createMediKioskAgent() {
         4. Madhumehari Churna (3g twice daily before breakfast and dinner)
         5. Diabetic offloading orthotic footwear - zero barefoot walking.
 
-      # Structured Clinical History Taking Protocol (PS 26047):
+      # Autonomous OPD Clinical History Taking Protocol:
       Your task is to take his clinical history step by step. Ask ONE single question at a time so the conversation feels snappy, natural, and low-latency:
       1. Ask how the foot ulcer feels and his pain level (1 to 10 scale).
       2. Ask if there is any fresh redness, swelling, pus, or bad odor from the wound.

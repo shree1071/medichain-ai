@@ -1,6 +1,8 @@
-# MediChain AI — MineArena 1.0
+# Autonomous OPD Clinical Case-Taking Kiosk — MediChain AI
 
-A patient-owned sovereign health record platform pairing immutable smart contracts with on-device clinical intelligence. Built for **MineArena 1.0 Hackathon** ([minearena-1-0.devpost.com](https://minearena-1-0.devpost.com/)).
+> **Problem Statement:** Multimodal AI-powered intake via Voice & Touch. Elicits SOCRATES anamnesis, AYUSH Dashavidha Pariksha, and digitizes past records in 2 minutes before the doctor consult.
+
+Built for **MineArena 1.0 Hackathon** ([minearena-1-0.devpost.com](https://minearena-1-0.devpost.com/)).
 
 ## Inspiration
 
