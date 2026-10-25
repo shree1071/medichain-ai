@@ -107,14 +107,9 @@ export default function AyushKioskHome() {
                 <path d="M7.97945 19.6719C7.97945 21.8066 6.24893 23.5371 4.11424 23.5371C1.97954 23.5371 0.249023 21.8066 0.249023 19.6719C0.249023 17.5372 1.97954 15.8066 4.11424 15.8066C6.24893 15.8066 7.97945 17.5372 7.97945 19.6719Z" fill="#4865FF"/>
               </g>
             </svg>
-            <div className="flex flex-col">
-              <span className="font-serif text-[22px] sm:text-[24px] tracking-tight text-[#080331] font-normal leading-none select-none">
-                MediChain <span className="text-[#4865FF] font-sans font-bold text-xl sm:text-2xl">AI</span>
-              </span>
-              <span className="text-[9px] font-semibold uppercase tracking-wider text-[#4865ff] leading-none mt-0.5">
-                Autonomous OPD Kiosk
-              </span>
-            </div>
+            <span className="font-serif text-[23px] sm:text-[25px] tracking-tight text-[#080331] font-normal leading-none select-none">
+              MediChain <span className="text-[#4865FF] font-sans font-bold text-xl sm:text-2xl">AI</span>
+            </span>
           </a>
 
           {/* Center Navigation Links (Matching August Health layout) */}
@@ -420,37 +415,37 @@ export default function AyushKioskHome() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#328a3b] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#328a3b]"></span>
             </span>
-            <span className="font-semibold tracking-wide">{t('hero.badge', 'MINEARENA 1.0 · AUTONOMOUS OPD CLINICAL KIOSK')}</span>
+            <span className="font-semibold tracking-wide">{t('hero.badge', 'MINEARENA 1.0 · MEDICHAIN AI')}</span>
             <span className="text-stone/30">|</span>
-            <span className="text-[#4865ff] font-semibold">Dual-Mode Voice &amp; Touch Kiosk</span>
+            <span className="text-[#4865ff] font-semibold">Zero Centralized Data Silos</span>
           </div>
 
           {/* Unmistakable Editorial Headline */}
-          <h1 className="font-serif text-[38px] sm:text-[50px] md:text-[56px] lg:text-[64px] leading-[1.06] text-[#080331] font-normal tracking-[-0.015em] mb-5 max-w-[660px] mx-auto">
-            {t('hero.title', 'Autonomous OPD Clinical Case-Taking Kiosk')}
+          <h1 className="font-serif text-[38px] sm:text-[50px] md:text-[56px] lg:text-[64px] leading-[1.06] text-[#080331] font-normal tracking-[-0.015em] mb-5 max-w-[680px] mx-auto">
+            {t('hero.title', 'Patient-Owned Health Record System')}
           </h1>
 
           {/* Subtitle: Plain, human, universally understandable */}
-          <p className="font-sans text-[15px] sm:text-[17px] md:text-[18px] text-[#333333] font-normal leading-relaxed max-w-[580px] mx-auto mb-8">
-            {t('hero.subtitle', 'Multimodal AI-powered intake via Voice & Touch. Elicits SOCRATES anamnesis, AYUSH Dashavidha Pariksha, and digitizes past records in 2 minutes before the doctor consult.')}
+          <p className="font-sans text-[15px] sm:text-[17px] md:text-[18px] text-[#333333] font-normal leading-relaxed max-w-[620px] mx-auto mb-8">
+            {t('hero.subtitle', 'Reports encrypted on IPFS with Polygon blockchain hashes. Auto-expiring smart contract access (CAEAP), local private AI with MedGemma 4B, and wallet-free login for rural users.')}
           </p>
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-3.5 mb-10">
             <button 
-              onClick={() => setIsKioskModalOpen(true)}
+              onClick={() => navigate('/patient')}
               className="home-hero-primary bg-[#4865ff] hover:bg-[#3855eb] text-white font-medium text-[15px] sm:text-[16px] px-7 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-[0_12px_24px_rgba(72,101,255,0.28)] transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2 cursor-pointer"
             >
-              <Touchpad size={18} />
-              <span>{t('hero.btnTouch', 'Start Touch & Voice Kiosk')}</span>
+              <UploadCloud size={18} />
+              <span>{t('nav.patientPortal', 'Patient Portal')}</span>
               <ArrowRight size={16} />
             </button>
             <button 
-              onClick={() => setIsVoiceModalOpen(true)}
+              onClick={() => setIsKioskModalOpen(true)}
               className="bg-white hover:bg-[#f8f3eb] text-[#080331] border border-[#4d4439]/20 font-medium text-[15px] sm:text-[16px] px-6 sm:px-7 py-3 sm:py-3.5 rounded-full shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center gap-2"
             >
-              <Mic size={16} className="text-[#4865ff]" />
-              <span>{t('hero.btnVoice', 'Voice Assistant Call')}</span>
+              <Touchpad size={16} className="text-[#4865ff]" />
+              <span>{t('hero.btnTouch', 'Try Intake Kiosk')}</span>
             </button>
             <button 
               onClick={() => navigate('/dashboard')}

@@ -22,7 +22,7 @@ export default function MediChainOverviewSection() {
 
   const tabs = [
     { id: 'inspiration', label: 'Inspiration', icon: ShieldAlert, badge: '815M Breach' },
-    { id: 'what-it-does', label: 'What It Does', icon: Cpu, badge: 'Clinical Kiosk' },
+    { id: 'what-it-does', label: 'What It Does', icon: Cpu, badge: 'MediChain AI' },
     { id: 'architecture', label: 'How We Built It', icon: Layers, badge: 'Full Stack' },
     { id: 'challenges', label: 'Challenges', icon: Flame, badge: 'Solutions' },
     { id: 'learnings', label: 'What We Learned', icon: GraduationCap, badge: 'ICDDS\'26' },
@@ -41,15 +41,15 @@ export default function MediChainOverviewSection() {
         <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#4865ff]/20 bg-[#4865ff]/8 text-[#4865ff] text-[11px] sm:text-xs font-semibold tracking-widest uppercase mb-4 shadow-xs">
             <Lock size={12} className="text-[#4865ff]" />
-            <span>AUTONOMOUS CLINICAL INTAKE &amp; SOVEREIGN HEALTH RECORD ARCHITECTURE</span>
+            <span>PATIENT-OWNED SOVEREIGN HEALTH RECORD ARCHITECTURE</span>
           </div>
 
           <h2 className="font-serif text-[34px] sm:text-[46px] lg:text-[52px] leading-[1.1] text-[#080331] font-normal mb-4">
-            Autonomous OPD Kiosk &amp; MediChain Architecture
+            MediChain <span className="text-[#4865ff] italic font-serif">AI</span> System Architecture
           </h2>
 
           <p className="font-sans text-[15px] sm:text-[17px] text-[#4d4439] leading-relaxed max-w-[700px] mx-auto">
-            Multimodal AI-powered intake via Voice &amp; Touch. Elicits SOCRATES anamnesis, AYUSH Dashavidha Pariksha, and digitizes past records in 2 minutes before the doctor consult.
+            From the 815M ICMR data breach to wallet-free SSS-TEE cryptography: how we built an autonomous, patient-owned, and private clinical health records ecosystem.
           </p>
         </div>
 
@@ -159,10 +159,10 @@ export default function MediChainOverviewSection() {
                   Core Capabilities
                 </span>
                 <h3 className="font-serif text-[28px] sm:text-[36px] text-[#080331] font-normal mt-2">
-                  What Autonomous OPD Kiosk &amp; MediChain AI Does
+                  What MediChain AI Does
                 </h3>
                 <p className="text-sm sm:text-base text-stone-600 mt-2">
-                  Multimodal AI intake via Voice &amp; Touch (SOCRATES + Dashavidha Pariksha) paired with sovereign on-chain record ownership.
+                  A patient-owned sovereign health record platform pairing immutable smart contracts with on-device clinical intelligence.
                 </p>
               </div>
 
