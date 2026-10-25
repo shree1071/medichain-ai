@@ -1,4 +1,0 @@
-livekit-agents[sarvam,silero]>=1.7.1
-livekit-plugins-sarvam>=1.7.1
-livekit-plugins-silero>=1.7.1
-python-dotenv>=1.0.1
