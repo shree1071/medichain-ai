@@ -421,13 +421,13 @@ export default function AyushKioskHome() {
           </div>
 
           {/* Unmistakable Editorial Headline */}
-          <h1 className="font-serif text-[38px] sm:text-[50px] md:text-[56px] lg:text-[64px] leading-[1.06] text-[#080331] font-normal tracking-[-0.015em] mb-5 max-w-[640px] mx-auto">
-            {t('hero.title', 'Patient-Owned Health Records & Autonomous Clinical Intake')}
+          <h1 className="font-serif text-[38px] sm:text-[50px] md:text-[56px] lg:text-[64px] leading-[1.06] text-[#080331] font-normal tracking-[-0.015em] mb-5 max-w-[660px] mx-auto">
+            {t('hero.title', 'Autonomous OPD Clinical Case-Taking Kiosk')}
           </h1>
 
           {/* Subtitle: Plain, human, universally understandable */}
-          <p className="font-sans text-[15px] sm:text-[17px] md:text-[18px] text-[#333333] font-normal leading-relaxed max-w-[520px] mx-auto mb-8">
-            {t('hero.subtitle', 'Patients speak in their mother tongue or tap through adaptive AI MCQs while waiting. Doctors receive a complete, structured clinical summary before the patient walks in.')}
+          <p className="font-sans text-[15px] sm:text-[17px] md:text-[18px] text-[#333333] font-normal leading-relaxed max-w-[580px] mx-auto mb-8">
+            {t('hero.subtitle', 'Multimodal AI-powered intake via Voice & Touch. Elicits SOCRATES anamnesis, AYUSH Dashavidha Pariksha, and digitizes past records in 2 minutes before the doctor consult.')}
           </p>
 
           {/* Action Buttons */}
