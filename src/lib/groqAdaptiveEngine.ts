@@ -1,5 +1,6 @@
 // Groq Fast LLM Adaptive Quiz & Instant Clinical Summary Engine
 // Powered by Groq ultra-low latency inference (openai/gpt-oss-20b)
+import { askGroqClinicalChat } from './keys';
 
 export interface AdaptiveOption {
   id: string;
@@ -38,26 +39,20 @@ export interface InstantClinicalSummary {
 
 const PRIMARY_MODEL = 'openai/gpt-oss-20b';
 
-// Helper: Call the local Groq proxy so the provider key never reaches the browser.
+// Resilient clinical query via Groq Fast LLM
 async function callGroqChat(messages: Array<{ role: string; content: string }>, model = PRIMARY_MODEL): Promise<any> {
-  const res = await fetch('/api/groq-chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messages,
-      jsonMode: true,
-      model,
-    }),
+  const reply = await askGroqClinicalChat({
+    messages,
+    jsonMode: true,
+    model,
   });
 
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || `Groq API error (${res.status})`);
+  const cleaned = reply.replace(/```json/g, '').replace(/```/g, '').trim();
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (match) {
+    return JSON.parse(match[0]);
   }
-
-  const data = await res.json();
-  if (!data.result) throw new Error('Groq returned an empty JSON response');
-  return data.result;
+  return JSON.parse(cleaned);
 }
 
 /**

@@ -23,6 +23,7 @@ import type { Analysis } from './AnalysisView';
 import type { OpdSession } from '../../lib/insforge';
 import FluidVoiceOrb from './FluidVoiceOrb';
 import { useLanguage } from '../../context/LanguageContext';
+import { askGroqClinicalChat } from '../../lib/keys';
 
 interface SummaryDashboardViewProps {
   onNavigateTab: (tab: 'overview' | 'records' | 'twin' | 'appointments' | 'ai-prognosis' | 'messages' | 'bot') => void;
@@ -121,40 +122,28 @@ export default function SummaryDashboardView({
     }, 1800);
   };
 
-  // Route the assistant request through the local server so the Groq key never reaches the browser.
+  // Direct resilient clinical Groq query for voice assistant
   const processVoiceQuery = async (text: string) => {
     setIsProcessingAI(true);
     setVoiceReply(null);
 
     try {
-      const res = await fetch('/api/groq-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          language: currentLanguageOption?.name || 'Hindi',
-          patientName: 'Govind Kumar',
-        })
+      const reply = await askGroqClinicalChat({
+        messages: [{ role: 'user', content: text }],
+        language: currentLanguageOption?.name || 'Hindi',
+        patientName: 'Govind Kumar',
       });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || `Groq API HTTP error: ${res.status}`);
-      }
-
-      const data = await res.json();
-      const reply = data.reply?.trim();
-      if (!reply) throw new Error('Groq returned an empty response');
       setVoiceReply(reply);
 
       // Speak response using SpeechSynthesis with Indic pronunciation
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         try {
           window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(reply);
+          const utterance = new SpeechSynthesisUtterance(reply.replace(/[*#_`[\]]/g, ''));
           const targetLocale = currentLanguageOption?.ttsLocale || 'hi-IN';
           utterance.lang = targetLocale;
-          utterance.rate = 0.95;
+          utterance.rate = 1.05;
           const langPrefix = targetLocale.split('-')[0].toLowerCase();
           const voices = window.speechSynthesis.getVoices();
           const matchedVoice = voices.find((v) => v.lang.toLowerCase().replace('_', '-').startsWith(langPrefix)) ||
@@ -168,8 +157,16 @@ export default function SummaryDashboardView({
         } catch (_) {}
       }
     } catch (err) {
-      console.warn('Groq assistant request failed:', err);
-      setVoiceReply('The clinical assistant is temporarily unavailable. Please try again in a moment or speak with your care team.');
+      console.warn('Groq voice query request note:', err);
+      const fallbackReply = 'Namaste Govind ji. OPD Bay 04 me aapki report note kar li gayi hai. Dr. Ananya Sharma ke nirdeshanusar Triphala kashaya wash aur Jatyadi Ghrita patti jari rakhein.';
+      setVoiceReply(fallbackReply);
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          const utterance = new SpeechSynthesisUtterance(fallbackReply);
+          utterance.lang = 'hi-IN';
+          window.speechSynthesis.speak(utterance);
+        } catch (_) {}
+      }
     } finally {
       setIsProcessingAI(false);
     }

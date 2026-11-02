@@ -1370,27 +1370,68 @@ function StandaloneVoiceAssistantContent({
           reader.onloadend = async () => {
             const base64Audio = reader.result as string;
             try {
-              const res = await fetch('/api/voice/stt', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  audio: base64Audio,
-                  language: selectedLangRef.current === 'auto' ? 'unknown' : selectedLangRef.current
-                })
-              });
-              if (res.ok) {
-                const data = await res.json();
-                if (data.transcript && data.transcript.trim()) {
-                  if (data.language_code) {
-                    const detectedCode = data.language_code.split('-')[0];
-                    detectedLangRef.current = detectedCode;
-                    setDetectedLang(detectedCode);
-                    handleUserSpeech(data.transcript.trim(), detectedCode);
-                  } else {
-                    handleUserSpeech(data.transcript.trim(), selectedLangRef.current);
+              let transcriptResult = '';
+              let detectedCodeResult = '';
+
+              // 1. Try local proxy endpoint /api/voice/stt
+              try {
+                const res = await fetch('/api/voice/stt', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    audio: base64Audio,
+                    language: selectedLangRef.current === 'auto' ? 'unknown' : selectedLangRef.current
+                  })
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data.transcript && data.transcript.trim()) {
+                    transcriptResult = data.transcript.trim();
+                    detectedCodeResult = data.language_code ? data.language_code.split('-')[0] : '';
                   }
-                  return;
                 }
+              } catch (_) {}
+
+              // 2. Direct Sarvam AI Saaras v3 STT fallback (CORS enabled)
+              if (!transcriptResult) {
+                const sarvamKey = getRuntimeSarvamKey();
+                if (sarvamKey) {
+                  try {
+                    const form = new FormData();
+                    form.append('file', wavBlob, 'recording.wav');
+                    form.append('model', 'saaras:v3');
+                    const langMap: Record<string, string> = {
+                      hi: 'hi-IN', en: 'en-IN', mr: 'mr-IN', te: 'te-IN', gu: 'gu-IN',
+                      bn: 'bn-IN', ta: 'ta-IN', kn: 'kn-IN', ml: 'ml-IN', pa: 'pa-IN', od: 'od-IN'
+                    };
+                    form.append('language_code', langMap[selectedLangRef.current] || 'unknown');
+                    const sttRes = await fetch('https://api.sarvam.ai/speech-to-text', {
+                      method: 'POST',
+                      headers: { 'api-subscription-key': sarvamKey },
+                      body: form
+                    });
+                    if (sttRes.ok) {
+                      const sttData = await sttRes.json();
+                      if (sttData.transcript && sttData.transcript.trim()) {
+                        transcriptResult = sttData.transcript.trim();
+                        detectedCodeResult = sttData.language_code ? sttData.language_code.split('-')[0] : '';
+                      }
+                    }
+                  } catch (directSttErr) {
+                    console.warn('Direct Sarvam STT note:', directSttErr);
+                  }
+                }
+              }
+
+              if (transcriptResult) {
+                if (detectedCodeResult) {
+                  detectedLangRef.current = detectedCodeResult;
+                  setDetectedLang(detectedCodeResult);
+                  handleUserSpeech(transcriptResult, detectedCodeResult);
+                } else {
+                  handleUserSpeech(transcriptResult, selectedLangRef.current);
+                }
+                return;
               }
             } catch (err) {
               console.warn('Sarvam STT acoustic fallback error:', err);
