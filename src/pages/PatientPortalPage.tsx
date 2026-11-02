@@ -252,11 +252,11 @@ export default function PatientPortalPage() {
     setUploadStage('Uploading document to InsForge Storage...');
     showToast(`Uploading "${file.name}" to InsForge Storage...`);
 
-    const stageTimer1 = setTimeout(() => setUploadStage('Digitizing with Sarvam Vision OCR...'), 1200);
-    const stageTimer2 = setTimeout(() => setUploadStage('Generating report with Sarvam Clinical Extraction...'), 7000);
+    const stageTimer1 = setTimeout(() => setUploadStage('Digitizing with MedGemma Vision OCR...'), 1200);
+    const stageTimer2 = setTimeout(() => setUploadStage('Generating report with MedGemma Clinical AI...'), 7000);
 
     try {
-      // 1. Process through Sarvam Doc-AI + Sarvam clinical extraction + InsForge Storage
+      // 1. Process through MedGemma Vision OCR + Groq clinical extraction + InsForge Storage
       const result = await processPrescriptionWithSarvamAndInsForge(
         file,
         user?.id || 'patient-demo',
@@ -275,8 +275,8 @@ export default function PatientPortalPage() {
         summary:
           ext.patient_summary ||
           ext.doctor_report ||
-          `Prescription digitized from ${file.name} via Sarvam OCR.`,
-         risk_score: ext.risk_score ?? 0,
+          `Prescription digitized from ${file.name} via MedGemma AI.`,
+        risk_score: ext.risk_score ?? 0,
         conditions: [
           ...(ext.diagnosis_found &&
           !ext.diagnosis_found.toLowerCase().includes('not provided') &&
@@ -285,7 +285,7 @@ export default function PatientPortalPage() {
             ? [ext.diagnosis_found]
             : ['Clinical Intake']),
           'InsForge Stored',
-          'Sarvam OCR Analyzed'
+          'MedGemma AI Analyzed'
         ],
         specialist:
           ext.prescribing_doctor &&
@@ -867,7 +867,7 @@ export default function PatientPortalPage() {
                       </span>
                     </div>
                     <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full uppercase">
-                      {t('patient.medGemmaOcr', 'Sarvam OCR')}
+                      {t('patient.medGemmaOcr', 'MedGemma OCR')}
                     </span>
                   </div>
 
@@ -882,7 +882,7 @@ export default function PatientPortalPage() {
                       </div>
                       <div className="text-left min-w-0 flex-1">
                         <div className="text-xs font-semibold text-slate-800 group-hover:text-black whitespace-nowrap">
-                          {isUploading ? 'Digitizing with Sarvam...' : 'Upload Prescription'}
+                          {isUploading ? 'Digitizing with MedGemma...' : 'Upload Prescription'}
                         </div>
                         <div className="text-[10px] text-slate-400 truncate">
                           PDF, JPG, PNG (Max 25MB)
@@ -900,10 +900,10 @@ export default function PatientPortalPage() {
                       <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
                       <div className="overflow-hidden">
                         <div className="text-xs font-semibold text-blue-900 truncate">
-                          {uploadStage || 'Digitizing with Sarvam AI...'}
+                          {uploadStage || 'Digitizing with MedGemma AI...'}
                         </div>
                         <div className="text-[10px] text-blue-600">
-                          InsForge Storage • Sarvam Vision OCR • Clinical Extraction
+                          InsForge Storage • MedGemma Vision OCR • Groq Fast LLM
                         </div>
                       </div>
                     </div>
@@ -916,7 +916,7 @@ export default function PatientPortalPage() {
                         <FileText size={26} className="mx-auto mb-2 text-slate-300" />
                         <p className="text-xs font-semibold text-slate-700">No Prescriptions Yet</p>
                         <p className="text-[11px] text-slate-400 mt-0.5">
-                          Upload a doctor slip or clinical report to inspect with live Sarvam OCR.
+                          Upload a doctor slip or clinical report to inspect with live MedGemma OCR.
                         </p>
                       </div>
                     ) : (

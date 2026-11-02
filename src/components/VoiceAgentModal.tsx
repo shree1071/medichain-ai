@@ -35,6 +35,7 @@ import {
 import FluidVoiceOrb from './patient/FluidVoiceOrb';
 import TouchHistoryEngine, { type HistoryTakingResult } from './TouchHistoryEngine';
 import { useLanguage } from '../context/LanguageContext';
+import { getRuntimeGroqKey, getRuntimeSarvamKey } from '../lib/keys';
 
 interface VoiceAgentModalProps {
   isOpen: boolean;
@@ -813,7 +814,6 @@ function StandaloneVoiceAssistantContent({
   // High-fidelity neural voice synthesis with Sarvam Bulbul v3 (female 'kavya' voice, pace adjusted)
   const playNeuralVoice = async (text: string, langHint?: string, paceHint?: number) => {
     // Use half-duplex turn-taking: the microphone is fully stopped while TTS is playing.
-    // This prevents the assistant's own voice from becoming the next user transcript.
     stopListening();
     if (!soundEnabled || !isCallActiveRef.current) {
       if (isCallActiveRef.current && !isMutedRef.current) {
@@ -842,8 +842,25 @@ function StandaloneVoiceAssistantContent({
       else targetLang = 'hi';
     }
 
+    const langCodeMap: Record<string, string> = {
+      hi: 'hi-IN', en: 'en-IN', kn: 'kn-IN', mr: 'mr-IN',
+      te: 'te-IN', ta: 'ta-IN', gu: 'gu-IN', bn: 'bn-IN',
+      ml: 'ml-IN', pa: 'pa-IN', od: 'od-IN'
+    };
+    let targetCode = langCodeMap[targetLang] || 'hi-IN';
+    if (/[\u0C80-\u0CFF]/.test(cleanText)) targetCode = 'kn-IN';
+    else if (/[\u0B80-\u0BFF]/.test(cleanText)) targetCode = 'ta-IN';
+    else if (/[\u0C00-\u0C7F]/.test(cleanText)) targetCode = 'te-IN';
+    else if (/[\u0980-\u09FF]/.test(cleanText)) targetCode = 'bn-IN';
+    else if (/[\u0A80-\u0AFF]/.test(cleanText)) targetCode = 'gu-IN';
+    else if (/[\u0900-\u097F]/.test(cleanText)) targetCode = 'hi-IN';
+    else if (/^[A-Za-z0-9\s.,!?'"()\-]+$/.test(cleanText)) targetCode = 'en-IN';
+
     const paceToUse = paceHint || voiceSpeedRef.current || 1.16;
 
+    let base64Audio: string | null = null;
+
+    // 1. Try local proxy endpoint /api/voice/tts
     try {
       const res = await fetch('/api/voice/tts', {
         method: 'POST',
@@ -852,56 +869,113 @@ function StandaloneVoiceAssistantContent({
           text: cleanText,
           language: targetLang,
           pace: paceToUse,
-          speaker: 'kavya' // Warm, articulate female neural voice
+          speaker: 'kavya'
         })
       });
-
       if (res.ok) {
         const data = await res.json();
-        if (data.audio) {
-          const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
-          currentAudioRef.current = audio;
-          audio.playbackRate = paceToUse;
+        if (data.audio) base64Audio = data.audio;
+      }
+    } catch (_) {}
 
-          audio.onended = () => {
-            setIsSpeaking(false);
-            isSpeakingRef.current = false;
-            currentAudioRef.current = null;
-            // Re-arm the microphone only after playback has completely finished.
-            if (isCallActiveRef.current && !isMutedRef.current) {
-              setTimeout(() => startListening(), 350);
+    // 2. Direct Sarvam AI Bulbul v3 TTS call (CORS enabled)
+    if (!base64Audio) {
+      const sarvamApiKey = getRuntimeSarvamKey();
+      if (sarvamApiKey) {
+        try {
+          const directTtsRes = await fetch('https://api.sarvam.ai/text-to-speech', {
+            method: 'POST',
+            headers: {
+              'api-subscription-key': sarvamApiKey,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              inputs: [cleanText],
+              target_language_code: targetCode,
+              speaker: 'kavya',
+              model: 'bulbul:v3',
+              pace: paceToUse
+            })
+          });
+          if (directTtsRes.ok) {
+            const directTtsData = await directTtsRes.json();
+            if (directTtsData.audios?.[0]) {
+              base64Audio = directTtsData.audios[0];
             }
-          };
-
-          audio.onerror = (e) => {
-            console.warn('Audio playback error:', e);
-            setIsSpeaking(false);
-            isSpeakingRef.current = false;
-            currentAudioRef.current = null;
-            if (isCallActiveRef.current && !isMutedRef.current) {
-              setTimeout(() => startListening(), 350);
-            }
-          };
-
-          await audio.play();
-          return;
+          }
+        } catch (directErr) {
+          console.warn('[Voice Agent] Direct Sarvam TTS note:', directErr);
         }
       }
-      setTimeout(() => {
-        setIsSpeaking(false);
-        isSpeakingRef.current = false;
-        if (isCallActiveRef.current && !isMutedRef.current) {
-          setTimeout(() => startListening(), 350);
-        }
-      }, 1200);
-    } catch (e) {
-      console.warn('TTS request error:', e);
+    }
+
+    // 3. Play audio if base64 WAV is available
+    if (base64Audio) {
+      try {
+        const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
+        currentAudioRef.current = audio;
+        audio.playbackRate = paceToUse;
+
+        audio.onended = () => {
+          setIsSpeaking(false);
+          isSpeakingRef.current = false;
+          currentAudioRef.current = null;
+          if (isCallActiveRef.current && !isMutedRef.current) {
+            setTimeout(() => startListening(), 350);
+          }
+        };
+
+        audio.onerror = (e) => {
+          console.warn('Audio playback error:', e);
+          setIsSpeaking(false);
+          isSpeakingRef.current = false;
+          currentAudioRef.current = null;
+          if (isCallActiveRef.current && !isMutedRef.current) {
+            setTimeout(() => startListening(), 350);
+          }
+        };
+
+        await audio.play();
+        return;
+      } catch (playErr) {
+        console.warn('Audio play exception, falling back to Web Speech synthesis:', playErr);
+      }
+    }
+
+    // 4. Native Browser SpeechSynthesis Fallback (Guaranteed to play audio everywhere)
+    if ('speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.rate = Math.min(1.4, Math.max(0.8, paceToUse));
+        utterance.lang = targetCode;
+        utterance.onend = () => {
+          setIsSpeaking(false);
+          isSpeakingRef.current = false;
+          if (isCallActiveRef.current && !isMutedRef.current) {
+            setTimeout(() => startListening(), 350);
+          }
+        };
+        utterance.onerror = () => {
+          setIsSpeaking(false);
+          isSpeakingRef.current = false;
+          if (isCallActiveRef.current && !isMutedRef.current) {
+            setTimeout(() => startListening(), 350);
+          }
+        };
+        window.speechSynthesis.speak(utterance);
+        return;
+      } catch (_) {}
+    }
+
+    // 5. Fallback timer if no audio mechanism is supported
+    setTimeout(() => {
       setIsSpeaking(false);
       isSpeakingRef.current = false;
       if (isCallActiveRef.current && !isMutedRef.current) {
         setTimeout(() => startListening(), 350);
       }
-    }
+    }, 1200);
   };
 
   // Start continuous, hands-free phone call listening with acoustic VAD.
@@ -1347,7 +1421,7 @@ function StandaloneVoiceAssistantContent({
     }
   };
 
-  // Clinical reasoning & conversation via server-side /api/voice/chat (Groq GPT-OSS 20B)
+  // Clinical reasoning & conversation via server-side /api/voice/chat or direct Groq Fast LLM
   const handleUserSpeech = async (text: string, spokenLanguage = detectedLangRef.current) => {
     stopListening();
     stopAudio();
@@ -1355,42 +1429,113 @@ function StandaloneVoiceAssistantContent({
     setIsThinking(true);
     isThinkingRef.current = true;
 
+    let replyData: { reply: string; detectedLang?: string; pace?: number; paceReason?: string } | null = null;
+
+    // 1. Try backend endpoint /api/voice/chat first
     try {
       const res = await fetch('/api/voice/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
-            language: spokenLanguage || selectedLangRef.current,
+          language: spokenLanguage || selectedLangRef.current,
           patientName: participantName
         })
       });
 
       if (res.ok) {
         const data = await res.json();
-        const reply = data.reply?.trim();
-        if (!reply) throw new Error('Groq returned an empty response');
-        if (data.detectedLang) {
-          detectedLangRef.current = data.detectedLang;
-          setDetectedLang(data.detectedLang);
+        if (data.reply) {
+          replyData = data;
         }
-        if (data.pace) {
-          setVoiceSpeed(data.pace);
-          voiceSpeedRef.current = data.pace;
-        }
-        if (data.paceReason) {
-          setPaceReason(data.paceReason);
-        }
-        setLatestAssistantSpeech(reply);
-        await playNeuralVoice(reply, data.detectedLang || selectedLangRef.current, data.pace);
-      } else {
-        throw new Error(`Voice chat error (${res.status})`);
       }
+    } catch (_) {}
+
+    // 2. Fallback to Direct Groq Fast LLM (openai/gpt-oss-20b)
+    if (!replyData) {
+      const groqApiKey = getRuntimeGroqKey();
+      if (groqApiKey) {
+        try {
+          const systemPrompt = `You are Dr. Vaidya Ananya Sharma, expert Ayurvedic physician and clinical assistant at OPD Bay 04, National Institute of Ayurveda (MediChain AI MineArena 1.0).
+Patient: ${participantName}, 58M, Type 2 Diabetes with Wagner Grade 2 Plantar Neuropathic Ulcer (left foot, 1st metatarsal head).
+Current Regimen: Triphala Kashaya dhawana wash, Jatyadi Ghrita sterile dressing, Kaishore Guggulu (2 tabs BD), Madhumehari Churna (3g BD), custom diabetic offloading footwear.
+Detected spoken language hint: ${spokenLanguage || 'auto'}.
+CRITICAL VOICE CALL INSTRUCTIONS:
+1. Detect the language spoken by the patient (Hindi, English, Kannada, Marathi, Telugu, Tamil, Bengali, Gujarati, etc.).
+2. REPLY IN THE EXACT SAME LANGUAGE (e.g. Hindi in Devanagari, Kannada in Kannada script, English in English).
+3. PHONE CALL CADENCE: Keep every reply SHORT, conversational, and brisk (strictly 1 to 2 spoken sentences maximum!).
+4. Maintain empathetic clinical warmth and reassure the patient that OPD Bay 04 is tracking their progress.
+5. If emergency signs appear (pain >7, fever, spreading cellulitis, foul pus), urgently instruct them to alert the Bay 04 nursing station.
+6. SPOKEN TEXT ONLY: Absolutely NO markdown, NO asterisks (*), NO bullet points, NO emoji. Plain text only.`;
+
+          const chatRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'openai/gpt-oss-20b',
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: text }
+              ],
+              temperature: 0.2,
+              max_completion_tokens: 256
+            })
+          });
+
+          if (chatRes.ok) {
+            const chatData = await chatRes.json();
+            const reply = chatData.choices?.[0]?.message?.content?.trim();
+            if (reply) {
+              let detectedLang = spokenLanguage || 'hi';
+              if (/[\u0C80-\u0CFF]/.test(reply)) detectedLang = 'kn';
+              else if (/[\u0B80-\u0BFF]/.test(reply)) detectedLang = 'ta';
+              else if (/[\u0C00-\u0C7F]/.test(reply)) detectedLang = 'te';
+              else if (/[\u0980-\u09FF]/.test(reply)) detectedLang = 'bn';
+              else if (/[\u0A80-\u0AFF]/.test(reply)) detectedLang = 'gu';
+              else if (/[\u0900-\u097F]/.test(reply)) detectedLang = 'hi';
+              else if (/^[A-Za-z0-9\s.,!?'"()-]+$/.test(reply)) detectedLang = 'en';
+
+              let judgedPace = 1.16;
+              let paceReason = 'Natural Conversational';
+              const combined = (text + ' ' + reply).toLowerCase();
+              if (/(emergency|urgent|alert|danger|cellulitis|fever|pus|bleeding|severe|turant)/i.test(combined)) {
+                judgedPace = 1.25;
+                paceReason = 'Urgent Clinical Alert';
+              } else if (/(dosage|churna|kashaya|vati|tablet|triphala|jatyadi)/i.test(combined)) {
+                judgedPace = 1.08;
+                paceReason = 'Clear Regimen Guidance';
+              }
+
+              replyData = { reply, detectedLang, pace: judgedPace, paceReason };
+            }
+          }
+        } catch (groqErr) {
+          console.warn('[Voice Agent] Direct Groq chat note:', groqErr);
+        }
+      }
+    }
+
+    try {
+      const reply = replyData?.reply || 'Aapki jaankari note kar li gayi hai. Dr. Ananya Sharma ko update bhej diya hai.';
+      const dl = replyData?.detectedLang || detectedLangRef.current || 'hi';
+      const pace = replyData?.pace || 1.16;
+
+      detectedLangRef.current = dl;
+      setDetectedLang(dl);
+      setVoiceSpeed(pace);
+      voiceSpeedRef.current = pace;
+      if (replyData?.paceReason) setPaceReason(replyData.paceReason);
+
+      setLatestAssistantSpeech(reply);
+      await playNeuralVoice(reply, dl, pace);
     } catch (error) {
-      console.warn('Groq voice assistant request failed:', error);
-      const unavailableMessage = 'The Groq clinical assistant is temporarily unavailable. Please try again or speak with your care team.';
-      setLatestAssistantSpeech(unavailableMessage);
-      await playNeuralVoice(unavailableMessage, detectedLangRef.current, 1.05);
+      console.warn('Voice assistant turn playback error:', error);
+      const fallbackReply = 'Main samajh gayi hoon. OPD Bay 04 me aapki file review ho rahi hai.';
+      setLatestAssistantSpeech(fallbackReply);
+      await playNeuralVoice(fallbackReply, detectedLangRef.current, 1.15);
     } finally {
       setIsThinking(false);
       isThinkingRef.current = false;

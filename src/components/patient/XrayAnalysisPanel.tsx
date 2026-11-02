@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, FileImage, LoaderCircle, RotateCcw, Trash2, UploadCloud } from 'lucide-react';
+import { getRuntimeGroqKey } from '../../lib/keys';
 
 type AnalysisState = 'idle' | 'ready' | 'analyzing' | 'complete' | 'error';
 
@@ -199,7 +200,7 @@ export default function XrayAnalysisPanel({ patientName = 'the patient' }: XrayA
   };
 
   const generateRadiologyReport = async (pName: string, fName: string): Promise<string> => {
-    const groqApiKey = import.meta.env.VITE_GROQ_API_KEY || '';
+    const groqApiKey = getRuntimeGroqKey();
     const prompt = `Review this preliminary clinical radiographic examination for patient ${pName} (Document: ${fName}, Modality: Chest Radiograph X-ray PA View).
 Provide a professional preliminary radiological impression report based on visible thoracic structures.
 Use plain text only: no Markdown, no asterisks, no hash symbols, no bullet characters, no emojis, and no decorative formatting.

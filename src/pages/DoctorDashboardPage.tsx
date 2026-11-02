@@ -317,7 +317,7 @@ export default function DoctorDashboardPage() {
     if (!files || files.length === 0) return;
     const file = files[0];
     setIsDoctorUploading(true);
-    triggerToast(`Uploading "${file.name}" to InsForge Storage & digitizing with Sarvam OCR...`);
+    triggerToast(`Uploading "${file.name}" to InsForge Storage & digitizing with MedGemma Vision OCR...`);
 
     try {
       const result = await processPrescriptionWithSarvamAndInsForge(
@@ -352,7 +352,7 @@ export default function DoctorDashboardPage() {
 
       const medsSummary = ext.extracted_medications?.map((m: any) => `${m.name} (${m.dosage || ''} ${m.frequency || ''})`).join(', ');
       setConsultationNotes((prev) =>
-        `[Prescription Uploaded by Clinician via Sarvam OCR at ${new Date().toLocaleTimeString()}]\n` +
+        `[Prescription Uploaded by Clinician via MedGemma Vision OCR at ${new Date().toLocaleTimeString()}]\n` +
         `Document: ${cleanName}\nDiagnosis: ${ext.diagnosis_found}\n` +
         `Medications: ${medsSummary}\n` +
         (ext.contraindications_with_ulcer?.length ? `Contraindications: ${ext.contraindications_with_ulcer.join('; ')}\n` : '') +
@@ -363,7 +363,7 @@ export default function DoctorDashboardPage() {
       triggerToast(`Prescription "${cleanName}" digitized and stored in InsForge bucket!`);
     } catch (err: any) {
       console.error('Doctor prescription upload failed:', err);
-        triggerToast('OCR processing failed: ' + (err?.message || 'Check Sarvam / InsForge'));
+      triggerToast('OCR processing failed: ' + (err?.message || 'Check MedGemma / InsForge'));
     } finally {
       setIsDoctorUploading(false);
     }
@@ -391,7 +391,7 @@ export default function DoctorDashboardPage() {
       const detail = e.detail;
       if (detail) {
         const cleanName = cleanDocumentName(detail.file_name);
-        triggerToast(`New Prescription Scanned: ${detail.patient} - Digitized via Sarvam OCR`);
+        triggerToast(`New Prescription Scanned: ${detail.patient} - Digitized via MedGemma OCR`);
         setPatientUploadAlert({
           patient: detail.patient,
           fileName: cleanName,
@@ -405,7 +405,7 @@ export default function DoctorDashboardPage() {
         const allergies = detail.detected_allergies?.join(', ') || 'None flagged';
 
         setConsultationNotes(
-          `[Digitized Prescription Received via Sarvam Vision OCR & InsForge at ${new Date().toLocaleTimeString()}]\nPatient: ${detail.patient}\nDocument: ${cleanName}\nDiagnosis: ${detail.diagnosis_found || detail.chief_complaint || 'Clinical Intake'}\nExtracted Medications: ${medsSummary}\nAllergies Detected: ${allergies}\nClinical Summary: ${detail.clinical_summary || 'Prescription reviewed.'}\n\nDoctor Status: Digitized record verified by Dr. Vaidya Ananya Sharma (Bay 04).`
+          `[Digitized Prescription Received via MedGemma Vision OCR & InsForge at ${new Date().toLocaleTimeString()}]\nPatient: ${detail.patient}\nDocument: ${cleanName}\nDiagnosis: ${detail.diagnosis_found || detail.chief_complaint || 'Clinical Intake'}\nExtracted Medications: ${medsSummary}\nAllergies Detected: ${allergies}\nClinical Summary: ${detail.clinical_summary || 'Prescription reviewed.'}\n\nDoctor Status: Digitized record verified by Dr. Vaidya Ananya Sharma (Bay 04).`
         );
 
         setSelectedSession((prev) => {
@@ -891,7 +891,7 @@ export default function DoctorDashboardPage() {
                                 <span>{scanCount} {scanCount === 1 ? 'doc' : 'docs'}</span>
                               </span>
                               <span className={isSelected ? 'text-emerald-300 font-semibold' : 'text-emerald-700 font-semibold'}>
-                                Sarvam OCR
+                                MedGemma OCR
                               </span>
                             </div>
                           )}
@@ -1144,7 +1144,7 @@ export default function DoctorDashboardPage() {
                             <FlaskConical size={16} className="text-amber-600" />
                             <h3 className="font-bold text-slate-900 text-sm">Digitized Prescriptions &amp; Lab OCR</h3>
                             <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                              Sarvam Vision OCR
+                              MedGemma Vision OCR
                             </span>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
@@ -1221,7 +1221,7 @@ export default function DoctorDashboardPage() {
 
                         {!scan ? (
                           <div className="text-center py-8 text-xs text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                            No prescriptions digitized yet. Click "Upload Rx" to process with Sarvam OCR.
+                            No prescriptions digitized yet. Click "Upload Rx" to process with MedGemma OCR.
                           </div>
                         ) : (
                           <>
@@ -1244,7 +1244,7 @@ export default function DoctorDashboardPage() {
                               <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
                                 <div className="font-bold flex items-center gap-1.5 text-amber-800">
                                   <AlertTriangle size={14} className="text-amber-600" />
-                                  <span>Contraindications &amp; Precautions (Sarvam Clinical Extraction):</span>
+                                  <span>Contraindications &amp; Precautions (MedGemma Clinical Extraction):</span>
                                 </div>
                                 <div className="text-[11px] text-amber-800 pl-1 leading-relaxed">
                                   {Array.isArray(scan.lab_flags) ? (
@@ -1415,7 +1415,7 @@ export default function DoctorDashboardPage() {
                     3D Anatomical Digital Twin &amp; Pathology Mapping
                   </h1>
                   <p className="text-xs text-slate-500 mt-1">
-                    Select any patient from the queue below to inspect dynamic 3D organ stress, peel anatomical layers, and correlate symptoms with Sarvam clinical extraction.
+                    Select any patient from the queue below to inspect dynamic 3D organ stress, peel anatomical layers, and correlate symptoms with MedGemma clinical extraction.
                   </p>
                 </div>
 
@@ -1611,14 +1611,14 @@ export default function DoctorDashboardPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Live Sarvam Vision OCR &amp; Clinical Extraction
+                      Live MedGemma Vision OCR &amp; Clinical Extraction
                     </span>
                   </div>
                   <h2 className="text-xl font-bold text-slate-900 mt-0.5">
                     Interactive Side-by-Side Prescription &amp; Lab Inspector
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Original document with interactive bounding box overlays synced to Sarvam OCR blocks and clinical report.
+                    Original document with interactive bounding box overlays synced to MedGemma OCR blocks and clinical report.
                   </p>
                 </div>
 

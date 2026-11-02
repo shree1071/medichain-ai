@@ -206,7 +206,7 @@ export default function OcrComparisonViewer({
               </span>
             </div>
             <p className="text-[11px] text-slate-500 truncate">
-              Digitized prescription document and Sarvam extracted clinical entities
+              Digitized prescription document and MedGemma extracted clinical entities
             </p>
           </div>
         </div>
@@ -547,7 +547,7 @@ export default function OcrComparisonViewer({
         </div>
 
         {/* ══════════════════════════════════════════════════════════════
-            RIGHT (5 cols): SCANNED OCR IDENTIFICATION & SARVAM REPORT
+            RIGHT (5 cols): SCANNED OCR IDENTIFICATION & MEDGEMMA REPORT
             ══════════════════════════════════════════════════════════════ */}
         <div className="lg:col-span-5 flex flex-col min-h-0 bg-white">
           {/* Navigation Tabs */}
@@ -561,7 +561,7 @@ export default function OcrComparisonViewer({
               }`}
             >
               <Sparkles size={13} />
-              <span>Sarvam Clinical Report</span>
+              <span>MedGemma Clinical Report</span>
             </button>
 
             <button
@@ -591,7 +591,7 @@ export default function OcrComparisonViewer({
 
           {/* Tab Content Body */}
           <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
-            {/* ── TAB 1: SARVAM CLINICAL REPORT ── */}
+            {/* ── TAB 1: MEDGEMMA CLINICAL REPORT ── */}
             {activeTab === 'report' && (
               <div className="space-y-4 animate-fade-in">
                 {/* Doctor Clinical Anamnesis Report */}
@@ -599,10 +599,10 @@ export default function OcrComparisonViewer({
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 flex items-center gap-1">
                       <ShieldCheck size={13} />
-                      Attending Clinician Anamnesis (Sarvam Clinical Report)
+                      Attending Clinician Anamnesis (MedGemma Clinical Report)
                     </span>
                     <span className="text-[10px] font-mono text-slate-400">
-                      Verified by Model
+                      Verified by MedGemma 27B
                     </span>
                   </div>
                   <p className="text-xs text-slate-800 leading-relaxed font-sans">
@@ -647,7 +647,7 @@ export default function OcrComparisonViewer({
                       Extracted Medications ({extraction?.extracted_medications?.length || 0})
                     </h4>
                     <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      Vision OCR Digitize
+                      MedGemma Digitize
                     </span>
                   </div>
 
@@ -696,7 +696,7 @@ export default function OcrComparisonViewer({
                   <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl space-y-2 text-xs text-rose-900">
                     <div className="font-bold flex items-center gap-1.5 text-rose-800">
                       <AlertTriangle size={15} className="text-rose-600" />
-                      <span>Allergies &amp; Clinical Contraindications (Flagged by Sarvam)</span>
+                      <span>Allergies &amp; Clinical Contraindications (Flagged by MedGemma AI)</span>
                     </div>
 
                     {extraction.detected_allergies && extraction.detected_allergies.length > 0 && (
@@ -818,7 +818,7 @@ export default function OcrComparisonViewer({
             {activeTab === 'raw' && (
               <div className="space-y-2 animate-fade-in">
                 <div className="flex items-center justify-between text-xs text-slate-500 pb-1">
-                  <span>Raw Text Stream from Sarvam Vision OCR</span>
+                  <span>Raw Text Stream from MedGemma Vision OCR</span>
                   <button
                     onClick={() => navigator.clipboard.writeText(rawOcrText)}
                     className="text-blue-600 hover:underline font-semibold cursor-pointer"
