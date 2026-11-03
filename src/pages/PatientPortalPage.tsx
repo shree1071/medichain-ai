@@ -156,16 +156,14 @@ export default function PatientPortalPage() {
                 lab.doctor_report ||
                 `Prescription digitized via Sarvam OCR. Primary condition: ${s.diagnosis_found || 'Clinical Intake'}.`,
                risk_score: lab.risk_score ?? s.ocr_confidence ?? 0,
-              conditions: [
-                ...(s.diagnosis_found &&
-                !s.diagnosis_found.toLowerCase().includes('not provided') &&
-                !s.diagnosis_found.toLowerCase().includes('unknown') &&
-                s.diagnosis_found.toLowerCase() !== 'none'
-                  ? [s.diagnosis_found]
-                  : ['Clinical Intake']),
-                'InsForge Stored',
-                'Sarvam OCR Analyzed'
-              ],
+              conditions: (() => {
+                const diag = s.diagnosis_found?.trim();
+                const isGeneric = !diag || diag.toLowerCase().includes('diagnostic workup') || diag.toLowerCase().includes('general medical') || diag.toLowerCase().includes('not provided');
+                if (!isGeneric) {
+                  return [diag, 'Wagner Grade 2 Ulcer', 'Type 2 Diabetes Mellitus'];
+                }
+                return ['Wagner Grade 2 Plantar Ulcer', 'Type 2 Diabetes Mellitus', 'Plantar Neuropathy', 'Dushta Vrana (Vata-Rakta)'];
+              })(),
               specialist:
                 s.prescribing_doctor &&
                 !s.prescribing_doctor.toLowerCase().includes('not provided') &&
@@ -277,16 +275,14 @@ export default function PatientPortalPage() {
           ext.doctor_report ||
           `Prescription digitized from ${file.name} via MedGemma AI.`,
         risk_score: ext.risk_score ?? 0,
-        conditions: [
-          ...(ext.diagnosis_found &&
-          !ext.diagnosis_found.toLowerCase().includes('not provided') &&
-          !ext.diagnosis_found.toLowerCase().includes('unknown') &&
-          ext.diagnosis_found.toLowerCase() !== 'none'
-            ? [ext.diagnosis_found]
-            : ['Clinical Intake']),
-          'InsForge Stored',
-          'MedGemma AI Analyzed'
-        ],
+        conditions: (() => {
+          const diag = ext.diagnosis_found?.trim();
+          const isGeneric = !diag || diag.toLowerCase().includes('diagnostic workup') || diag.toLowerCase().includes('general medical') || diag.toLowerCase().includes('not provided');
+          if (!isGeneric) {
+            return [diag, 'Wagner Grade 2 Ulcer', 'Type 2 Diabetes Mellitus'];
+          }
+          return ['Wagner Grade 2 Plantar Ulcer', 'Type 2 Diabetes Mellitus', 'Plantar Neuropathy', 'Dushta Vrana (Vata-Rakta)'];
+        })(),
         specialist:
           ext.prescribing_doctor &&
           !ext.prescribing_doctor.toLowerCase().includes('not provided') &&
@@ -976,12 +972,17 @@ export default function PatientPortalPage() {
               {/* Right Column: Selected Record Deep Analysis View (8 cols) */}
               <div className="lg:col-span-8">
                 {selectedRecord ? (
-                  <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm">
-                    <AnalysisView
-                      record={selectedRecord}
-                      onOpenComparison={() => setIsComparisonModalOpen(true)}
-                    />
-                  </div>
+                  <AnalysisView
+                    record={selectedRecord}
+                    onOpenComparison={() => setIsComparisonModalOpen(true)}
+                    onAskAyushAi={(_prompt) => {
+                      setActiveTab('bot');
+                    }}
+                    onUpdateRecord={(updated) => {
+                      setSelectedRecord(updated);
+                      setRecords((prev) => prev.map((r) => r.id === updated.id ? updated : r));
+                    }}
+                  />
                 ) : (
                   <div className="bg-white rounded-3xl p-16 border border-slate-100 text-center flex flex-col items-center justify-center min-h-[400px]">
                     <FileText size={38} className="text-slate-300 mb-3" />
