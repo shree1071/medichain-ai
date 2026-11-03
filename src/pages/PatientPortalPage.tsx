@@ -972,17 +972,12 @@ export default function PatientPortalPage() {
               {/* Right Column: Selected Record Deep Analysis View (8 cols) */}
               <div className="lg:col-span-8">
                 {selectedRecord ? (
-                  <AnalysisView
-                    record={selectedRecord}
-                    onOpenComparison={() => setIsComparisonModalOpen(true)}
-                    onAskAyushAi={(_prompt) => {
-                      setActiveTab('bot');
-                    }}
-                    onUpdateRecord={(updated) => {
-                      setSelectedRecord(updated);
-                      setRecords((prev) => prev.map((r) => r.id === updated.id ? updated : r));
-                    }}
-                  />
+                  <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
+                    <AnalysisView
+                      record={selectedRecord}
+                      onOpenComparison={() => setIsComparisonModalOpen(true)}
+                    />
+                  </div>
                 ) : (
                   <div className="bg-white rounded-3xl p-16 border border-slate-100 text-center flex flex-col items-center justify-center min-h-[400px]">
                     <FileText size={38} className="text-slate-300 mb-3" />
