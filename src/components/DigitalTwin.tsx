@@ -339,26 +339,31 @@ export default function DigitalTwin({ analysisData, recordId }: DigitalTwinProps
       },
       Heart: {
         ...prev['Heart'],
-        ...evaluateRisk(['heart', 'cardio', 'pulse', 'bp', 'hypertension', 'cholesterol'], 'Heart'),
+        ...evaluateRisk(['heart', 'cardio', 'pulse', 'bp', 'hypertension', 'cholesterol', 'concor', 'eritel', 'tmt', 'echo'], 'Heart'),
         muscleId: 'HEART'
       },
       Liver: {
         ...prev['Liver'],
-        ...evaluateRisk(['liver', 'hepatic', 'alcohol', 'fatty', 'bilirubin'], 'Liver'),
+        ...evaluateRisk(['liver', 'hepatic', 'dyslipidemia', 'lipid', 'cholesterol', 'statin', 'aztor'], 'Liver'),
         muscleId: 'LIVER'
       },
       Gut: {
         ...prev['Gut'],
-        ...evaluateRisk(['stomach', 'gut', 'digestive', 'diabetes', 'sugar', 'glucose', 'bowel', 'ulcer'], 'Gut'),
+        ...evaluateRisk(['pancreas', 'stomach', 'gut', 'digestive', 'diabetes', 'sugar', 'glucose', 'insulin', 'janumet', 'hba1c', 'glimepiride', 'zoryl', 'dm', 'ulcer'], 'Gut'),
         muscleId: 'GUT'
       },
       Kidneys: {
         ...prev['Kidneys'],
-        ...evaluateRisk(['kidney', 'renal', 'urine', 'creatinine'], 'Kidneys'),
+        ...evaluateRisk(['kidney', 'renal', 'urine', 'creatinine', 'mau', 'microalbuminuria', 'nephropathy'], 'Kidneys'),
         muscleId: 'KIDNEYS'
       }
     }));
   }, [analysisData]);
+
+  // Reset riskHighlighted when record changes so new records trigger organ highlighting
+  useEffect(() => {
+    setRiskHighlighted(false);
+  }, [analysisData, recordId]);
 
   // ─── AUTO-HIGHLIGHT RISK ORGANS (PRESERVES SKIN & MUSCLES) ──
   useEffect(() => {
@@ -370,7 +375,12 @@ export default function DigitalTwin({ analysisData, recordId }: DigitalTwinProps
     );
     if (riskyOrgans.length === 0) return;
 
-    // Apply bright glow to each risky organ without hiding skin or muscles
+    // Set skin material transparency so the glowing internal organs are clearly visible through the body
+    try {
+      setMaterialTransparency('HumanSkin', 0.2);
+    } catch (_) {}
+
+    // Apply bright glow to each risky organ
     riskyOrgans.forEach(([organName, data]) => {
       const nodeName = ANATOMY_MAPPING[data.muscleId];
       if (!nodeName) return;
@@ -378,14 +388,14 @@ export default function DigitalTwin({ analysisData, recordId }: DigitalTwinProps
       const nodeId = findNodeIdByName(nodeName);
       if (nodeId) {
         const color = RISK_COLORS[data.status];
-        const emissive = data.status === 'risk' ? 2.5 : 1.5;
+        const emissive = data.status === 'risk' ? 3.0 : 2.0;
         highlightNodeWithColor(nodeId, color, emissive);
         console.log(`[Risk] highlight prepared: ${organName} → ${nodeName}`);
       }
     });
 
     setRiskHighlighted(true);
-  }, [isReady, systemStatus, nodes, findNodeIdByName, highlightNodeWithColor, riskHighlighted]);
+  }, [isReady, systemStatus, nodes, findNodeIdByName, highlightNodeWithColor, riskHighlighted, setMaterialTransparency]);
 
   // ─── LAYER PEELING (TRANSPARENCY + HIDE) ───────────────────
   const peelLayer = useCallback(() => {
