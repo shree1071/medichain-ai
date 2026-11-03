@@ -217,34 +217,60 @@ export function useSketchfab(
 
   // ─── HIGHLIGHT WITH MAXIMUM GLOW ─────────────────────────────
   const highlightNodeWithColor = useCallback(
-    (nodeId: number, color: [number, number, number], emissiveStrength = 2.0) => {
+    (nodeId: number, color: [number, number, number], emissiveStrength = 2.5) => {
       if (!api || !nodes[nodeId]) return;
       const node = nodes[nodeId];
-      const nodeLower = node.name.toLowerCase().replace(/system|_| /g, '');
 
-      let applied = 0;
+      // Collect target material IDs and names from this node and all descendants
+      const targetMatIds = new Set<string>();
+      const targetNames = new Set<string>();
+
+      const collectNodeInfo = (n: SketchfabNode) => {
+        if (!n) return;
+        if (n.materialID) targetMatIds.add(n.materialID);
+        if (Array.isArray(n.materialIDs)) n.materialIDs.forEach((id: string) => targetMatIds.add(id));
+        if (n.name) targetNames.add(n.name.toLowerCase().replace(/system|_| |part|mesh/g, ''));
+        if (n.children && Array.isArray(n.children)) {
+          n.children.forEach(collectNodeInfo);
+        }
+      };
+      collectNodeInfo(node);
+
       materials.forEach((mat) => {
-        const matLower = (mat.name || '').toLowerCase().replace(/system|_| /g, '');
-        if (matLower.includes(nodeLower) || nodeLower.includes(matLower)) {
-          const tinted = JSON.parse(JSON.stringify(mat));
+        const matLower = (mat.name || '').toLowerCase().replace(/system|_| |part|mesh/g, '');
+        const isMatch =
+          targetMatIds.has(mat.id) ||
+          Array.from(targetNames).some(
+            (name) => name.length >= 3 && (matLower.includes(name) || name.includes(matLower))
+          );
 
-          // Emissive glow
-          if (tinted.channels.EmitColor) {
-            tinted.channels.EmitColor.enable = true;
-            tinted.channels.EmitColor.factor = emissiveStrength;
-            tinted.channels.EmitColor.color = [...color];
-          }
+        if (isMatch) {
+          const tinted = JSON.parse(JSON.stringify(mat));
+          if (!tinted.channels) tinted.channels = {};
+
+          // Guaranteed emissive glow
+          tinted.channels.EmitColor = {
+            enable: true,
+            factor: emissiveStrength,
+            color: [...color]
+          };
+
           if (tinted.channels.AlbedoPBR) {
+            tinted.channels.AlbedoPBR.enable = true;
             tinted.channels.AlbedoPBR.factor = 1.0;
             tinted.channels.AlbedoPBR.color = [...color];
           }
           if (tinted.channels.DiffuseColor) {
+            tinted.channels.DiffuseColor.enable = true;
             tinted.channels.DiffuseColor.factor = 1.0;
             tinted.channels.DiffuseColor.color = [...color];
           }
+          if (tinted.channels.Opacity) {
+            tinted.channels.Opacity.enable = true;
+            tinted.channels.Opacity.factor = 1.0;
+          }
 
           api.setMaterial(tinted, () => {});
-          applied++;
         }
       });
     },
@@ -253,25 +279,101 @@ export function useSketchfab(
 
   const highlightNode = useCallback(
     (nodeId: number) => {
-      highlightNodeWithColor(nodeId, [0.0, 1.0, 1.0], 1.0);
+      highlightNodeWithColor(nodeId, [0.0, 0.85, 1.0], 3.0);
     },
     [highlightNodeWithColor]
+  );
+
+  // ─── ROBUST HIGHLIGHT BY ORGAN NAME (NODE + MATERIAL DUAL MATCH) ──
+  const highlightOrganByName = useCallback(
+    (organKey: string, color: [number, number, number], emissiveStrength = 2.5) => {
+      if (!api || materials.length === 0) return;
+
+      const organSynonyms: Record<string, string[]> = {
+        heart: ['heart', 'corazon', 'cardio'],
+        lungs: ['humanlungs', 'lung', 'lungs', 'pulmo'],
+        liver: ['liver', 'hepatic', 'hepato'],
+        gut: ['digestivesystem', 'digestive', 'stomach', 'intestine', 'gut', 'pancreas'],
+        kidneys: ['urinary_system', 'urinary', 'kidney', 'renal'],
+        brain: ['brain', 'cerebr', 'neuro'],
+        skin: ['humanskin', 'skin'],
+        muscles: ['musclespart', 'muscles', 'muscular'],
+        ribcage: ['ribcage', 'ribs']
+      };
+
+      const keyLower = organKey.toLowerCase().replace(/system|_| /g, '');
+      const syns = organSynonyms[keyLower] || [keyLower];
+
+      // 1. Highlight via matching nodes
+      let matchedNodes: SketchfabNode[] = [];
+      syns.forEach((syn) => {
+        matchedNodes = matchedNodes.concat(findAllNodesByPartialName(syn));
+      });
+      const directNodeId = findNodeIdByName(organKey);
+      if (directNodeId && nodes[directNodeId]) {
+        matchedNodes.push(nodes[directNodeId]);
+      }
+
+      const processed = new Set<number>();
+      matchedNodes.forEach((node) => {
+        if (!processed.has(node.instanceID)) {
+          processed.add(node.instanceID);
+          highlightNodeWithColor(node.instanceID, color, emissiveStrength);
+        }
+      });
+
+      // 2. Direct material fallback
+      materials.forEach((mat) => {
+        const matLower = (mat.name || '').toLowerCase().replace(/system|_| |part|mesh/g, '');
+        if (syns.some((s) => matLower.includes(s) || s.includes(matLower))) {
+          const tinted = JSON.parse(JSON.stringify(mat));
+          if (!tinted.channels) tinted.channels = {};
+
+          tinted.channels.EmitColor = {
+            enable: true,
+            factor: emissiveStrength,
+            color: [...color]
+          };
+          if (tinted.channels.AlbedoPBR) {
+            tinted.channels.AlbedoPBR.enable = true;
+            tinted.channels.AlbedoPBR.factor = 1.0;
+            tinted.channels.AlbedoPBR.color = [...color];
+          }
+          if (tinted.channels.DiffuseColor) {
+            tinted.channels.DiffuseColor.enable = true;
+            tinted.channels.DiffuseColor.factor = 1.0;
+            tinted.channels.DiffuseColor.color = [...color];
+          }
+          if (tinted.channels.Opacity) {
+            tinted.channels.Opacity.enable = true;
+            tinted.channels.Opacity.factor = 1.0;
+          }
+
+          api.setMaterial(tinted, () => {});
+        }
+      });
+    },
+    [api, materials, nodes, findAllNodesByPartialName, findNodeIdByName, highlightNodeWithColor]
   );
 
   // ─── MATERIAL TRANSPARENCY ────────────────────────────────────
   const setMaterialTransparency = useCallback(
     (materialName: string, opacity: number) => {
-      if (!api) return;
-      const lower = materialName.toLowerCase();
+      if (!api || materials.length === 0) return;
+      const lower = materialName.toLowerCase().replace(/system|_| |part|mesh/g, '');
       materials.forEach((mat) => {
-        if ((mat.name || '').toLowerCase().includes(lower)) {
+        const matLower = (mat.name || '').toLowerCase().replace(/system|_| |part|mesh/g, '');
+        if (matLower.includes(lower) || lower.includes(matLower)) {
           const t = JSON.parse(JSON.stringify(mat));
-          if (t.channels.Opacity) {
+          if (!t.channels) t.channels = {};
+          if (!t.channels.Opacity) {
+            t.channels.Opacity = { enable: true, factor: opacity };
+          } else {
             t.channels.Opacity.enable = true;
             t.channels.Opacity.factor = opacity;
           }
           if (t.channels.AlbedoPBR) {
-            t.channels.AlbedoPBR.factor = opacity;
+            t.channels.AlbedoPBR.factor = Math.min(t.channels.AlbedoPBR.factor || 1.0, opacity);
           }
           api.setMaterial(t, () => {});
         }
@@ -298,6 +400,7 @@ export function useSketchfab(
   return {
     api,
     isReady,
+    isMaterialsReady: materials.length > 0,
     nodes,
     error,
     materials,
@@ -305,6 +408,7 @@ export function useSketchfab(
     findAllNodesByPartialName,
     highlightNode,
     highlightNodeWithColor,
+    highlightOrganByName,
     hideNode,
     showNode,
     resetMaterials,
